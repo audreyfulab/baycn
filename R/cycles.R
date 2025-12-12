@@ -1,6 +1,8 @@
 #' @importFrom parallel makeCluster stopCluster
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreach %dopar%
+#' @importFrom igraph components graph_from_adjacency_matrix
+#' @importFrom expm expm
 #' 
 # cycleSaL
 #
