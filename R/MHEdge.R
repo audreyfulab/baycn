@@ -403,6 +403,7 @@ mhEdge <- function (data,
                       size = nEdges,
                       replace = TRUE,
                       prob = prior)
+  #currentES <- c(1, 1, 1, 1, 1, 1)
 
   # Check if any gv nodes have ge node parents.
   if (pmr || nCPh >= 1) {
@@ -412,22 +413,12 @@ mhEdge <- function (data,
 
   }
 
-  # If there are potential directed cycles in the graph check if they are
-  # present and remove them if they are.
-  if (!is.null(cf$cycles)) {
-
-    # Remove any directed cycles in the graph.
-    currentES <- cycleRmvr(cycles = cf$cycles,
-                           edgeID = cf$edgeID,
-                           edgeType = edgeType,
-                           currentES = currentES,
-                           nCPh = nCPh,
-                           nCycles = cf$nCycles,
-                           nEdges = nEdges,
-                           pmr = pmr,
-                           prior = prior)
-
-  }
+  # Check if there are potential directed cycles in the graph and
+  # remove them if they are.
+  currentES <- cycleRmvr(currentES = currentES,
+                         nNodes = nNodes,
+                         coord = coord,
+                         prior = prior)
 
   # Turn the current edge states in to an adjacency matrix.
   currentAM <- toAdjMatrix(coordinates = coord,
@@ -472,22 +463,12 @@ mhEdge <- function (data,
                          prior = prior,
                          ztbProb = ztbProb)
 
-    # If there are potential directed cycles in the graph check if they are
-    # present and remove them if they are.
-    if (!is.null(cf$cycles)) {
-
-      # Remove any directed cycles in the graph.
-      proposedES <- cycleRmvr(cycles = cf$cycles,
-                              edgeID = cf$edgeID,
-                              edgeType = edgeType,
-                              currentES = proposedES,
-                              nCPh = nCPh,
-                              nCycles = cf$nCycles,
-                              nEdges = nEdges,
-                              pmr = pmr,
-                              prior = prior)
-
-    }
+    # If there are potential directed cycles in the graph remove them
+    # Does not include: edgetype, nCPh, pmr, 
+    proposedES <- cycleRmvr(currentES = proposedES,
+                           nNodes = nNodes,
+                           coord = coord,
+                           prior = prior)
 
     # Get the indices for the edge states that are different between the current
     # and proposed edge state vectors.

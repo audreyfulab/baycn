@@ -1498,117 +1498,312 @@ cycleFndr <- function (adjMatrix,
 
 }
 
+# --------------------------------------------------
+# New way to remove cycles
+# --------------------------------------------------
+
+# build_adj
+#
+# Converts a vector of edge states ("currentES") into an adjacency matrix
+# representation of a directed graph.
+#
+# @param coord A matrix specifying the row and column indices for each possible
+# edge. Must contain rows named "Rows" and "Columns", where each column
+# corresponds to an edge.
+#
+# @param currentES A vector of edge states for the current graph. Each entry
+# indicates the direction or absence of an edge:
+#   0 = forward edge (i → j),
+#   1 = reverse edge (j → i),
+#   2 = no edge.
+#
+# @param n An integer specifying the number of nodes in the graph.
+#
+# @return A numeric adjacency matrix of dimension n × n, where a value of 1
+# indicates a directed edge and 0 indicates no edge.
+build_adj <- function(coord, currentES, n) {
+  A <- matrix(0, nrow = n, ncol = n)
+  rows <- coord["Rows", ]
+  cols <- coord["Columns", ]
+  
+  for (k in seq_along(currentES)) {
+    type <- currentES[k]
+    i <- rows[k]
+    j <- cols[k]
+    
+    if (type == 0) {
+      # forward edge i → j
+      A[i, j] <- 1
+      
+    } else if (type == 1) {
+      A[j, i] <- 1
+      
+    } else if (type == 2) {
+      # no edge
+    }
+  }
+  return(A)
+}
+
+# adj_to_currentES
+#
+# Converts an adjacency matrix representation of a directed graph into a
+# vector of edge states ("currentES").
+#
+# @param adj A numeric adjacency matrix representing a directed graph, where
+# a value of 1 indicates a directed edge and 0 indicates no edge.
+#
+# @param coord A matrix specifying the row and column indices for each possible
+# edge. Must contain rows named "Rows" and "Columns", where each column
+# corresponds to an edge.
+#
+# @return A vector of edge states for the current graph. Each entry encodes
+# the direction or absence of an edge:
+#   0 = forward edge (i → j),
+#   1 = reverse edge (j → i),
+#   2 = no edge.
+adj_to_currentES <- function(adj, coord) {
+  rows <- coord["Rows", ]
+  cols <- coord["Columns", ]
+  
+  currentES <- integer(length(rows))
+  
+  for (k in seq_along(rows)) {
+    i <- rows[k]
+    j <- cols[k]
+    
+    if (adj[i, j] == 1) {
+      currentES[k] <- 0     # forward edge
+    } else if (adj[j, i] == 1) {
+      currentES[k] <- 1     # backward edge
+    } else {
+      currentES[k] <- 2     # no edge
+    }
+  }
+  
+  return(currentES)
+}
+
+# dag_constraint
+#
+# Computes a smooth acyclicity constraint for a directed graph represented
+# by an adjacency matrix. The constraint is zero if and only if the graph
+# is a Directed Acyclic Graph (DAG).
+#
+# @param A A square numeric adjacency matrix representing a directed graph,
+# where A[i, j] = 1 indicates a directed edge from node i to node j.
+#
+# @return A numeric scalar giving the value of the DAG constraint. A value of
+# zero indicates that the graph is acyclic, while positive values indicate
+# the presence of one or more directed cycles.
+dag_constraint <- function(A) {
+  B <- A * A
+  expB <- expm(B)
+  m <- nrow(A)
+  return(sum(diag(expB)) - m)
+}
+
+# make_acyclic
+#
+# Iteratively removes directed cycles from a graph by randomly selecting
+# edges that participate in a cycle and optionally reversing their direction
+# according to a prior distribution. The procedure terminates once the graph
+# is acyclic.
+#
+# @param adj A square numeric adjacency matrix representing a directed graph,
+# where adj[i, j] = 1 indicates a directed edge from node i to node j.
+#
+# @param prior A numeric vector of prior probabilities for edge states.
+# The entries correspond to:
+#   prior[1] = probability of reverse edge (j → i),
+#   prior[2] = probability of forward edge (i → j),
+#   prior[3] = probability of no edge.
+#
+# @return A numeric adjacency matrix with all directed cycles removed,
+# representing a Directed Acyclic Graph (DAG).
+make_acyclic <- function(adj, prior) {
+  repeat { # This will repeat until there is no cycle. 
+    
+    ces <- find_cycle_edges(adj)
+    if (is.null(ces)) break
+    
+    # randomly choose one cycle edge
+    e <- ces[[sample.int(length(ces), 1)]]
+    
+    # remove edge
+    adj[e[1], e[2]] <- 0
+    
+    # assign prob based on what type of edge it is
+    # e[1] is row of adj matrix. e[2] is col
+    if (e[1] < e[2]){ # 0 state
+      prob <- prior[2] / prior[3]
+    } else { # 1 state
+      prob <- prior[1] / prior[3]
+    }
+    
+    # sample type of edge
+    res <- rbinom(1, 1, prob)
+    if (res == 1) {
+      adj[e[2], e[1]] <- 1
+    }
+  }
+  adj
+}
+
+# find_cycle_edges
+#
+# Identifies edges that participate in directed cycles within a graph by
+# detecting strongly connected components (SCCs).
+#
+# @param adj A square numeric adjacency matrix representing a directed graph,
+# where adj[i, j] = 1 indicates a directed edge from node i to node j.
+#
+# @return A list of integer vectors of length two, where each vector
+# (u, v) represents a directed edge u → v that belongs to a cycle.
+# Returns NULL if no cycles are present in the graph.
+find_cycle_edges <- function(adj) {
+  g <- graph_from_adjacency_matrix(adj, mode = "directed")
+  scc <- components(g, mode = "strong")
+  
+  cycle_edges <- list()
+  
+  # Look at each SCC with >= 2 nodes (a cycle must have at least 2)
+  for (comp_id in unique(scc$membership)) {
+    nodes <- which(scc$membership == comp_id)
+    if (length(nodes) < 2) next
+    
+    # extract edges whose endpoints are both inside this SCC
+    for (u in nodes) {
+      for (v in which(adj[u,] == 1)) {
+        if (v %in% nodes) {
+          cycle_edges <- append(cycle_edges, list(c(u, v)))
+        }
+      }
+    }
+  }
+  
+  if (length(cycle_edges) > 0) cycle_edges else NULL
+}
+
 # cycleRmvr
 #
 # Changes the edge direction of the current graph until there are no directed
-# cylces.
+# cycles.
 #
-# @param cycles A matrix of edge states for each potential directed cycle.
+# @param coord A matrix specifying the row and column indices for each possible
+# edge. Must contain rows named "Rows" and "Columns", where each column
+# corresponds to an edge.
 #
-# @param edgeID A list of edge indices for each edge in each potential directed
-# cycle.
-#
-# @param edgeType A 0 or 1 indicating whether the edge is a gv-ge edge (1) or
-# a gv-gv or ge-ge edge (0).
+# @param nNodes The number of nodes in the graph.
 #
 # @param currentES A vector of edge states for the current graph.
-#
-# @param nCPh The number of clinical phenotypes in the graph.
-#
-# @param nEdges An integer for the number of edges in the graph.
-#
-# @param pmr Logical. If true the Metropolis-Hastings algorithm will use the
-# Principle of Mendelian Randomization, PMR. This prevents the direction of an
-# edge pointing from a gene expression node to a genetic variant node.
 #
 # @param prior A vector containing the prior probability of seeing each edge
 # direction.
 #
 # @return A vector of the DNA of the individual with the cycles removed.
 #
-cycleRmvr <- function (cycles,
-                       edgeID,
-                       edgeType,
-                       currentES,
-                       nCPh,
-                       nCycles,
-                       nEdges,
-                       pmr,
-                       prior) {
-
-  # Get the edge states from the current graph for each potential cycle.
-  currentC <- cycleCG_alter(currentES = currentES,
-                      edgeID = edgeID,
-                      nCycles = nCycles,
-                      nEdges = nEdges)
-
-  # Create a vector that holds the row indices where the sum of the row is equal
-  # to the number of edges in the graph. A sum of nEdges indicates a row in the
-  # currentC matrix matches the corresponding row in the cycle matrix meaning
-  # there is a directed cycle. The row number indicates which directed cycle is
-  # present in the current graph.
-  whichCycle <- which(rowSums(cycles == currentC) == nEdges)
-
-  # If there is a cycle change the direction of an edge invovled in the cycle.
-  while (length(whichCycle) != 0) {
-
-    # Loop through each cycle and remove it.
-    for (e in whichCycle) {
-
-      # Get the edges involved in the eth cycle
-      curEdges <- edgeID[[e]]
-
-      # Choose one of these edges and change it.
-      whichEdge <- sample(x = curEdges,
-                          size = 1)
-
-      # If there is a directed cycle the edge state is either a 0 or 1.
-      if(currentES[[whichEdge]] == 0) {
-
-        # The position in the prior vector of the prior probability for the two
-        # edge states that the current edge can move to.
-        prPos <- c(2, 3)
-
-        # The states the current edge can move to.
-        states <- c(1, 2)
-
-      } else {
-
-        # The position in the prior vector of the prior probability for the two
-        # edge states that the current edge can move to.
-        prPos <- c(1, 3)
-
-        # The states the current edge can move to.
-        states <- c(0, 2)
-
-      }
-
-      # Calculate the probability of moving to the two possible edge states.
-      probability <- cPrior(prPos = prPos,
-                            edgeType = edgeType[[whichEdge]],
-                            nCPh = nCPh,
-                            pmr = pmr,
-                            prior = prior)
-
-      # Select one of the two possible edge states according to the prior.
-      currentES[[whichEdge]] <- sample(x = states,
-                                       size = 1,
-                                       prob = probability)
-
-    }
-
-    # Get the edge states from the current graph for each potential cycle.
-    currentC <- cycleCG_alter(currentES = currentES,
-                        edgeID = edgeID,
-                        nCycles = nCycles,
-                        nEdges = nEdges)
-
-    # Recalculate the row sums and determine if any are zero.
-    whichCycle <- which(rowSums(cycles == currentC) == nEdges)
-
+cycleRmvr <- function(currentES,
+                      nNodes,
+                      coord,
+                      prior) { # Did not include: edgetype, nCPh, pmr, 
+  
+  # Convert currentES ito adj matrix
+  A <- build_adj(coord, currentES, nNodes)
+  
+  # Check if it is not a DAG
+  if (dag_constraint(A) > 0) {
+    A <- make_acyclic(A, prior)
+    currentES <- adj_to_currentES(A, coord)
   }
-
-  return (currentES)
-
+  
+  currentES
 }
+
+# cycleRmvr <- function (cycles,
+#                        edgeID,
+#                        edgeType,
+#                        currentES,
+#                        nCPh,
+#                        nCycles,
+#                        nEdges,
+#                        pmr,
+#                        prior) {
+# 
+#   # Get the edge states from the current graph for each potential cycle.
+#   # print(currentES)
+#   currentC <- cycleCG_alter(currentES = currentES,
+#                       edgeID = edgeID,
+#                       nCycles = nCycles,
+#                       nEdges = nEdges)
+# 
+#   # Create a vector that holds the row indices where the sum of the row is equal
+#   # to the number of edges in the graph. A sum of nEdges indicates a row in the
+#   # currentC matrix matches the corresponding row in the cycle matrix meaning
+#   # there is a directed cycle. The row number indicates which directed cycle is
+#   # present in the current graph.
+#   whichCycle <- which(rowSums(cycles == currentC) == nEdges)
+# 
+#   # If there is a cycle change the direction of an edge invovled in the cycle.
+#   while (length(whichCycle) != 0) {
+# 
+#     # Loop through each cycle and remove it.
+#     for (e in whichCycle) {
+# 
+#       # Get the edges involved in the eth cycle
+#       curEdges <- edgeID[[e]]
+# 
+#       # Choose one of these edges and change it.
+#       whichEdge <- sample(x = curEdges,
+#                           size = 1)
+# 
+#       # If there is a directed cycle the edge state is either a 0 or 1.
+#       if(currentES[[whichEdge]] == 0) {
+# 
+#         # The position in the prior vector of the prior probability for the two
+#         # edge states that the current edge can move to.
+#         prPos <- c(2, 3)
+# 
+#         # The states the current edge can move to.
+#         states <- c(1, 2)
+# 
+#       } else {
+# 
+#         # The position in the prior vector of the prior probability for the two
+#         # edge states that the current edge can move to.
+#         prPos <- c(1, 3)
+# 
+#         # The states the current edge can move to.
+#         states <- c(0, 2)
+# 
+#       }
+# 
+#       # Calculate the probability of moving to the two possible edge states.
+#       probability <- cPrior(prPos = prPos,
+#                             edgeType = edgeType[[whichEdge]],
+#                             nCPh = nCPh,
+#                             pmr = pmr,
+#                             prior = prior)
+# 
+#       # Select one of the two possible edge states according to the prior.
+#       currentES[[whichEdge]] <- sample(x = states,
+#                                        size = 1,
+#                                        prob = probability)
+# 
+#     }
+# 
+#     # Get the edge states from the current graph for each potential cycle.
+#     currentC <- cycleCG_alter(currentES = currentES,
+#                         edgeID = edgeID,
+#                         nCycles = nCycles,
+#                         nEdges = nEdges)
+# 
+#     # Recalculate the row sums and determine if any are zero.
+#     whichCycle <- which(rowSums(cycles == currentC) == nEdges)
+# 
+#   }
+# 
+#   return (currentES)
+# 
+# }
 
