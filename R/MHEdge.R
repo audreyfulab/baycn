@@ -348,7 +348,10 @@ mhEdge <- function (data,
   currentES <- cycleRmvr(currentES = currentES,
                          nNodes = nNodes,
                          coord = coord,
-                         prior = prior)
+                         prior = prior,
+                         edgeType = edgeType, 
+                         nCPh = nCPh, 
+                         pmr = pmr)
 
   # Turn the current edge states in to an adjacency matrix.
   currentAM <- toAdjMatrix(coordinates = coord,
@@ -398,7 +401,10 @@ mhEdge <- function (data,
     proposedES <- cycleRmvr(currentES = proposedES,
                            nNodes = nNodes,
                            coord = coord,
-                           prior = prior)
+                           prior = prior,
+                           edgeType = edgeType, 
+                           nCPh = nCPh, 
+                           pmr = pmr)
 
     # Get the indices for the edge states that are different between the current
     # and proposed edge state vectors.

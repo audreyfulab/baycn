@@ -1623,7 +1623,7 @@ dag_constraint <- function(A) {
 #
 # @return A numeric adjacency matrix with all directed cycles removed,
 # representing a Directed Acyclic Graph (DAG).
-make_acyclic <- function(adj, prior) {
+make_acyclic <- function(adj, prior, edgeType, nCPh, pmr) {
   repeat { # This will repeat until there is no cycle. 
     
     ces <- find_cycle_edges(adj)
@@ -1708,14 +1708,18 @@ find_cycle_edges <- function(adj) {
 cycleRmvr <- function(currentES,
                       nNodes,
                       coord,
-                      prior) { # Did not include: edgetype, nCPh, pmr, 
+                      prior,
+                      edgeType,
+                      nCPh,
+                      pmr) { # Did not include: edgetype, nCPh, pmr, 
   
   # Convert currentES ito adj matrix
   A <- build_adj(coord, currentES, nNodes)
+  edgeTypeAdj <- build_adj(coord, edgeType, nNodes)
   
   # Check if it is not a DAG
   if (dag_constraint(A) > 0) {
-    A <- make_acyclic(A, prior)
+    A <- make_acyclic(A, prior, edgeType, nCPh, pmr)
     currentES <- adj_to_currentES(A, coord)
   }
   
