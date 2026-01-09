@@ -277,6 +277,10 @@ cllNormal <- function (data,
                        nodeIndex,
                        pVector){
 
+  # Maximum log-likelihood value to prevent Inf - Inf = NaN
+  MAX_LL <- 1e100
+  MIN_LL <- -1e100
+
   # Check if the current node has any parents.
   if (sum(pVector) == 0) {
 
@@ -286,10 +290,20 @@ cllNormal <- function (data,
                     sd = sd(data[, nodeIndex]),
                     log = TRUE))
 
+    # Cap infinite values
+    if (is.infinite(ll)) {
+      ll <- ifelse(ll > 0, MAX_LL, MIN_LL)
+    }
+
   } else {
 
     # Store the log likelihood for the current node.
     ll <- logLik(lm(data[, nodeIndex] ~ data[, which(pVector != 0)]))[1]
+
+    # Cap infinite values (e.g., from perfect fit due to multicollinearity)
+    if (is.infinite(ll) || is.nan(ll)) {
+      ll <- ifelse(is.nan(ll) || ll > 0, MAX_LL, MIN_LL)
+    }
 
   }
 

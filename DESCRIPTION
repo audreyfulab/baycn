@@ -2,23 +2,23 @@ Encoding: UTF-8
 Package: baycn
 Type: Package
 Title: Bayesian Inference for Causal Networks
-Version: 1.3.0
+Version: 2.0.0
 Authors@R: c(person(given = c("Evan", "A"),
                       family = "Martin",
-                      role = c("aut", "cre"),
-                      email = "evanamartin@gmail.com"),
+                      role = c("aut")),
                person(given = "Venkata",
                       family = "Patchigolla",
                       role = "ctb"),
                person(given = "Audrey",
                       family = "Fu",
-                      role = "aut"))
+                      role = c("aut", "cre"),
+                      email = "audreyqyfu@gmail.com"))
 Description: An approximate Bayesian method for inferring Directed Acyclic Graphs
     (DAGs) for continuous, discrete, and mixed data. The algorithm can use the 
     graph inferred by another more efficient graph inference method as input;
     the input graph may contain false edges or undirected edges but can help
-    reduce the search space to a more manageable size. A Markov chain
-    Monte Carlo-like algorithm is then used to infer the posterior probabilities of 
+    reduce the search space to a more manageable size. A Metropolis-Hastings-like 
+    sampling algorithm is then used to infer the posterior probabilities of 
     edge direction and edge absence.
     References:
     Martin and Fu (2019) <doi:10.48550/arXiv.1909.10678>.

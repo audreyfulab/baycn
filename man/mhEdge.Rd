@@ -15,7 +15,8 @@ mhEdge(
   iterations = 1000,
   thinTo = 200,
   progress = TRUE,
-  threads = 1
+  threads = 1,
+  maxParents = NULL
 )
 }
 \arguments{
@@ -58,8 +59,12 @@ should be thinned to.}
 \item{progress}{Logical. If TRUE the runtime in seconds for the cycle finder
 and log likelihood functions and a progress bar will be printed.}
 
-\item{threads}{An integer specifying the number of threads to use for finding 
+\item{threads}{An integer specifying the number of threads to use for finding
 cycles. Default is 1}
+
+\item{maxParents}{Maximum number of parents allowed for any node. If NULL
+(default), no limit is imposed. This helps prevent overfitting and numerical
+issues with compositional data.}
 }
 \value{
 An object of class baycn containing 9 elements:

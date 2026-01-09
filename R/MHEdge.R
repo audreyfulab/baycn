@@ -42,8 +42,12 @@
 #' @param progress Logical. If TRUE the runtime in seconds for the cycle finder
 #' and log likelihood functions and a progress bar will be printed.
 #'
-#' @param threads An integer specifying the number of threads to use for finding 
+#' @param threads An integer specifying the number of threads to use for finding
 #' cycles. Default is 1
+#'
+#' @param maxParents Maximum number of parents allowed for any node. If NULL
+#' (default), no limit is imposed. This helps prevent overfitting and numerical
+#' issues with compositional data.
 #'
 #' @return An object of class baycn containing 9 elements:
 #'
@@ -167,7 +171,8 @@ mhEdge <- function (data,
                     iterations = 1000,
                     thinTo = 200,
                     progress = TRUE,
-                    threads = 1) {
+                    threads = 1,
+                    maxParents = NULL) {
 
   # Preprocessing checks -------------------------------------------------------
 
@@ -359,6 +364,39 @@ mhEdge <- function (data,
                            nEdges = nEdges,
                            nNodes = nNodes)
 
+  # Enforce maxParents limit on initial graph
+  if (!is.null(maxParents)) {
+    nParents <- colSums(currentAM)
+    while (any(nParents > maxParents)) {
+      # Find nodes with too many parents
+      overloaded <- which(nParents > maxParents)
+
+      # For each overloaded node, randomly remove edges until under limit
+      for (node in overloaded) {
+        parents <- which(currentAM[, node] == 1)
+        nToRemove <- length(parents) - maxParents
+
+        if (nToRemove > 0) {
+          toRemove <- sample(parents, nToRemove)
+          # Find edge indices for these parents and set to 2 (no edge)
+          for (parent in toRemove) {
+            edgeIdx <- which(coord[1, ] == parent & coord[2, ] == node)
+            if (length(edgeIdx) > 0) {
+              currentES[edgeIdx] <- 2
+            }
+          }
+        }
+      }
+
+      # Rebuild adjacency matrix
+      currentAM <- toAdjMatrix(coordinates = coord,
+                               graph = currentES,
+                               nEdges = nEdges,
+                               nNodes = nNodes)
+      nParents <- colSums(currentAM)
+    }
+  }
+
   # Look up the log likelihood for each node.
   currentLL <- lull(data = data,
                     am = currentAM,
@@ -416,6 +454,21 @@ mhEdge <- function (data,
                             coordinates = coord,
                             edgeStates = proposedES,
                             wEdges = difference$dEdges)
+
+    # Check if any node exceeds maxParents limit
+    if (!is.null(maxParents)) {
+      # Count parents for each node (column sums of adjacency matrix)
+      nParents <- colSums(proposedAM)
+
+      # If any node has too many parents, reject this proposal immediately
+      if (any(nParents > maxParents)) {
+        # Skip to next iteration, keeping currentES
+        if (progress) {
+          setTxtProgressBar(pb, e)
+        }
+        next
+      }
+    }
 
     # Look up the log likelihood for each node whose parents have changed.
     proposedLL <- lull(data = data,
