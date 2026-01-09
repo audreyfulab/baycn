@@ -1623,30 +1623,55 @@ dag_constraint <- function(A) {
 #
 # @return A numeric adjacency matrix with all directed cycles removed,
 # representing a Directed Acyclic Graph (DAG).
-make_acyclic <- function(adj, prior, edgeType, nCPh, pmr) {
+make_acyclic <- function(adj, prior, coord, edgeType, nCPh, pmr) {
   repeat { # This will repeat until there is no cycle. 
-    
     ces <- find_cycle_edges(adj)
     if (is.null(ces)) break
     
     # randomly choose one cycle edge
     e <- ces[[sample.int(length(ces), 1)]]
     
-    # remove edge
-    adj[e[1], e[2]] <- 0
-    
-    # assign prob based on what type of edge it is
-    # e[1] is row of adj matrix. e[2] is col
-    if (e[1] < e[2]){ # 0 state
-      prob <- prior[2] / prior[3]
-    } else { # 1 state
-      prob <- prior[1] / prior[3]
+    # order the edge states properly to index coord
+    eEdgeType <- e
+    if (e[1] > e[2]) {
+      eEdgeType <- c(e[2], e[1])
     }
     
-    # sample type of edge
-    res <- rbinom(1, 1, prob)
-    if (res == 1) {
-      adj[e[2], e[1]] <- 1
+    # find the index in coord to use on edgeType
+    for (i in 1:ncol(coord)) {
+      if (all(as.vector(coord[,i]) == eEdgeType)) {
+        break
+      }
+    }
+    
+    # e[1] is row of adj matrix. e[2] is col
+    if (e[1] < e[2]){ # 0 state
+      prPos <- c(2, 3)
+      states <- c(1, 2)
+    } else { # 1 state
+      prPos <- c(1, 3)
+      states <- c(0, 2)
+    }
+    
+    #Call original cPrior to get valid probabilities of change
+    probability <- cPrior(prPos = prPos,
+                          edgeType = edgeType[[i]],
+                          nCPh = nCPh,
+                          pmr = pmr,
+                          prior = prior)
+    
+    # sample new state for the edge
+    newState <- sample(x = states, size = 1, prob = probability)
+    
+    # remove both edge
+    adj[e[1], e[2]] <- 0
+    adj[e[2], e[1]] <- 0
+    
+    # Create edges based on sample
+    if (newState == 0) {
+      adj[eEdgeType[1], eEdgeType[2]] <- 0 # use eEdgeType bc true order based on coord
+    } else if (newState == 1) {
+      adj[eEdgeType[2], eEdgeType[1]] <- 0
     }
   }
   adj
@@ -1711,15 +1736,14 @@ cycleRmvr <- function(currentES,
                       prior,
                       edgeType,
                       nCPh,
-                      pmr) { # Did not include: edgetype, nCPh, pmr, 
+                      pmr) {
   
   # Convert currentES ito adj matrix
   A <- build_adj(coord, currentES, nNodes)
-  edgeTypeAdj <- build_adj(coord, edgeType, nNodes)
   
   # Check if it is not a DAG
   if (dag_constraint(A) > 0) {
-    A <- make_acyclic(A, prior, edgeType, nCPh, pmr)
+    A <- make_acyclic(A, prior, coord, edgeType, nCPh, pmr)
     currentES <- adj_to_currentES(A, coord)
   }
   
