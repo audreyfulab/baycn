@@ -6,7 +6,7 @@
 
 # baycn
 
-baycn is a Bayesian hybrid approach for inferring Directed Acyclic Graphs (DAGs) for continuous, discrete, and mixed data. The algorithm can use the graph inferred by another more efficient graph inference method as input; the input graph may contain false edges or undirected edges, but can help reduce the search space to a more manageable size. A Bayesian Metropolis-Hastings Markov chain Monte Carlo algorithm is then used to infer the probability of direction and absence for the edges in the network.
+baycn is an approximate Bayesian approach for inferring Directed Acyclic Graphs (DAGs) for continuous, discrete, and mixed data. The algorithm can use the graph inferred by another more efficient graph inference method as input; the input graph may contain false edges or undirected edges, but can help reduce the search space to a more manageable size. A Bayesian Metropolis-Hastings-like sampling algorithm is then used to infer the posterior probability of direction and absence for the edges in the network.
 
 ## Installation
 
@@ -17,8 +17,12 @@ install.packages('baycn')
 # The development (and most up to date) version can be installed from GitHub
 # using devtools:
 # If devtools is not installed first run install.packages('devtools')
-devtools::install_github('evanamartin/baycn')
+devtools::install_github('audreyfulab/baycn')
 ```
+
+## Development note: 
+
+This repository is a fork of evanamartin/baycn and is now the actively maintained version. The original repository is no longer under active development.
 
 ## Examples
 
