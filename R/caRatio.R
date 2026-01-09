@@ -119,6 +119,23 @@ caRatio <- function (current,
     ratio <- ((sum(priorP) + sum(proposedLL) + sum(transProbP))
               - (sum(priorC) + sum(currentLL) + sum(transProbC)))
 
+    # Diagnostic prints
+    if (is.na(ratio) || is.nan(ratio)) {
+      cat("\n=== NA/NaN detected in ratio ===\n")
+      cat("sum(priorP):", sum(priorP), "\n")
+      cat("sum(proposedLL):", sum(proposedLL), "\n")
+      cat("sum(transProbP):", sum(transProbP), "\n")
+      cat("sum(priorC):", sum(priorC), "\n")
+      cat("sum(currentLL):", sum(currentLL), "\n")
+      cat("sum(transProbC):", sum(transProbC), "\n")
+      cat("ratio:", ratio, "\n")
+      cat("priorP:", priorP, "\n")
+      cat("priorC:", priorC, "\n")
+      cat("proposedLL:", proposedLL, "\n")
+      cat("currentLL:", currentLL, "\n")
+      cat("================================\n")
+    }
+
     # Generate log uniform(0, 1) to compare to alpha which is
     # min(ratio, 0).
     logU <- log(runif(n = 1,
