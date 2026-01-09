@@ -285,43 +285,24 @@ cllNormal <- function (data,
   if (sum(pVector) == 0) {
 
     # Calculate the log likelihood for the current continuous node.
-    node_mean <- mean(data[, nodeIndex])
-    node_sd <- sd(data[, nodeIndex])
     ll <- sum(dnorm(x = data[, nodeIndex],
-                    mean = node_mean,
-                    sd = node_sd,
+                    mean = mean(data[, nodeIndex]),
+                    sd = sd(data[, nodeIndex]),
                     log = TRUE))
 
-    # Diagnostic output and cap infinite values
+    # Cap infinite values
     if (is.infinite(ll)) {
-      cat("\n=== Inf detected in cllNormal (no parents) ===\n")
-      cat("nodeIndex:", nodeIndex, "\n")
-      cat("mean:", node_mean, "\n")
-      cat("sd:", node_sd, "\n")
-      cat("ll before capping:", ll, "\n")
       ll <- ifelse(ll > 0, MAX_LL, MIN_LL)
-      cat("ll after capping:", ll, "\n")
-      cat("data range:", range(data[, nodeIndex]), "\n")
-      cat("============================================\n")
     }
 
   } else {
 
     # Store the log likelihood for the current node.
-    model <- lm(data[, nodeIndex] ~ data[, which(pVector != 0)])
-    ll <- logLik(model)[1]
+    ll <- logLik(lm(data[, nodeIndex] ~ data[, which(pVector != 0)]))[1]
 
-    # Diagnostic output and cap infinite values
+    # Cap infinite values (e.g., from perfect fit due to multicollinearity)
     if (is.infinite(ll) || is.nan(ll)) {
-      cat("\n=== Inf/NaN detected in cllNormal (with parents) ===\n")
-      cat("nodeIndex:", nodeIndex, "\n")
-      cat("parents:", which(pVector != 0), "\n")
-      cat("ll before capping:", ll, "\n")
       ll <- ifelse(is.nan(ll) || ll > 0, MAX_LL, MIN_LL)
-      cat("ll after capping:", ll, "\n")
-      cat("residuals range:", range(model$residuals), "\n")
-      cat("residuals sd:", sd(model$residuals), "\n")
-      cat("====================================================\n")
     }
 
   }
