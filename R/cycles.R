@@ -1669,9 +1669,9 @@ make_acyclic <- function(adj, prior, coord, edgeType, nCPh, pmr) {
     
     # Create edges based on sample
     if (newState == 0) {
-      adj[eEdgeType[1], eEdgeType[2]] <- 0 # use eEdgeType bc true order based on coord
+      adj[eEdgeType[1], eEdgeType[2]] <- 1 # use eEdgeType bc true order based on coord
     } else if (newState == 1) {
-      adj[eEdgeType[2], eEdgeType[1]] <- 0
+      adj[eEdgeType[2], eEdgeType[1]] <- 1
     }
   }
   adj
