@@ -1624,56 +1624,105 @@ dag_constraint <- function(A) {
 # @return A numeric adjacency matrix with all directed cycles removed,
 # representing a Directed Acyclic Graph (DAG).
 make_acyclic <- function(adj, prior, coord, edgeType, nCPh, pmr) {
-  repeat { # This will repeat until there is no cycle. 
+  
+  # Repeat until the adjacency matrix contains no directed cycles
+  repeat {
+    
+    # Identify all edges that are part of at least one cycle.
+    # Each element of `ces` is a length-2 vector (i, j) indicating
+    # a directed edge i -> j that participates in a cycle.
     ces <- find_cycle_edges(adj)
+    
+    # If no cycle edges are found, the graph is acyclic; exit loop.
     if (is.null(ces)) break
     
-    # randomly choose one cycle edge
+    # Randomly select ONE edge from the set of cycle-forming edges.
+    # This edge will be modified to help break the cycle.
     e <- ces[[sample.int(length(ces), 1)]]
     
-    # order the edge states properly to index coord
+    # The adjacency matrix encodes direction via (row, col),
+    # but `coord` stores edges as unordered node pairs (min, max).
+    # We reorder the selected edge indices to match `coord`.
     eEdgeType <- e
     if (e[1] > e[2]) {
       eEdgeType <- c(e[2], e[1])
     }
     
-    # find the index in coord to use on edgeType
+    # Find the column index `i` in `coord` that corresponds to
+    # this unordered edge pair. This index is used to:
+    #   1) look up edgeType
+    #   2) apply correct prior constraints
     for (i in 1:ncol(coord)) {
-      if (all(as.vector(coord[,i]) == eEdgeType)) {
+      if (all(as.vector(coord[, i]) == eEdgeType)) {
         break
       }
     }
     
-    # e[1] is row of adj matrix. e[2] is col
-    if (e[1] < e[2]){ # 0 state
-      prPos <- c(2, 3)
+    # Determine the CURRENT edge state based on adjacency direction:
+    #
+    # If e[1] < e[2]:
+    #   adj[e[1], e[2]] == 1  -> state 0 (forward)
+    #
+    # If e[1] > e[2]:
+    #   adj[e[2], e[1]] == 1  -> state 1 (backward)
+    #
+    # The edge can only transition to the two OTHER states.
+    if (e[1] < e[2]) { # Current state = 0 (forward)
+      
+      # Allowed transitions: 1 (backward) or 2 (no edge)
       states <- c(1, 2)
-    } else { # 1 state
-      prPos <- c(1, 3)
+      
+      # Corresponding indices in the prior vector:
+      #   prior[2] → state 1
+      #   prior[3] → state 2
+      prPos <- c(2, 3)
+      
+    } else { # Current state = 1 (backward)
+      
+      # Allowed transitions: 0 (forward) or 2 (no edge)
       states <- c(0, 2)
+      
+      # Corresponding indices in the prior vector:
+      #   prior[1] -> state 0
+      #   prior[3] -> state 2
+      prPos <- c(1, 3)
     }
     
-    #Call original cPrior to get valid probabilities of change
-    probability <- cPrior(prPos = prPos,
-                          edgeType = edgeType[[i]],
-                          nCPh = nCPh,
-                          pmr = pmr,
-                          prior = prior)
+    # Compute the conditional prior probabilities for the two
+    # allowed transitions, taking into account:
+    #   - edge type (gv-ge, gv-gv, etc.)
+    #   - PMR constraints
+    #   - presence of clinical phenotypes
+    probability <- cPrior(
+      prPos    = prPos,
+      edgeType = edgeType[[i]],
+      nCPh     = nCPh,
+      pmr      = pmr,
+      prior    = prior
+    )
     
-    # sample new state for the edge
+    # Sample the new edge state (0, 1, or 2) according to the
+    # conditional prior probabilities returned by cPrior().
     newState <- sample(x = states, size = 1, prob = probability)
     
-    # remove both edge
+    # Remove the current edge entirely (both directions) so that
+    # the new state can be cleanly applied.
     adj[e[1], e[2]] <- 0
     adj[e[2], e[1]] <- 0
     
-    # Create edges based on sample
+    # Re-insert the edge based on the sampled new state:
+    #
+    # state 0 -> forward edge  (min → max)
+    # state 1 -> backward edge (max → min)
+    # state 2 -> no edge (do nothing, already done)
     if (newState == 0) {
-      adj[eEdgeType[1], eEdgeType[2]] <- 1 # use eEdgeType bc true order based on coord
+      adj[eEdgeType[1], eEdgeType[2]] <- 1
     } else if (newState == 1) {
       adj[eEdgeType[2], eEdgeType[1]] <- 1
     }
   }
+  
+  # Return the modified adjacency matrix, guaranteed to be acyclic
   adj
 }
 
