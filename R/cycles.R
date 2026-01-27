@@ -150,10 +150,14 @@ make_acyclic <- function(adj, prior, coord, edgeType, nCPh, pmr) {
     # this unordered edge pair. This index is used to:
     #   1) look up edgeType
     #   2) apply correct prior constraints
-    for (i in 1:ncol(coord)) {
-      if (all(as.vector(coord[, i]) == eEdgeType)) {
-        break
+    if (any(edgeType == 1) && (pmr || nCPh >= 1)) {
+      for (i in 1:ncol(coord)) {
+        if (all(as.vector(coord[, i]) == eEdgeType)) {
+          break
+        }
       }
+    } else { # If no edgetypes, then all in edgetype are 0 and it doesn't matter what i is
+      i = 1
     }
     
     # Determine the CURRENT edge state based on adjacency direction:

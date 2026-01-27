@@ -34,7 +34,15 @@ test_that("make_acyclic can reverse an edge when forced", {
                       nNodes = nNodes,
                       pmr = 0)
   
-  res <- cycleRmvr(coord, currentES, nNodes, prior, edgeType, pmr, nCPh)
+  # run this several times and see if the outputs are different.
+  # for loops and print res for validation
+  res <- cycleRmvr(coord = coord, 
+                   currentES = currentES, 
+                   nNodes = nNodes, 
+                   prior = prior, 
+                   edgeType = edgeType, 
+                   pmr = pmr, 
+                   nCPh = nCPh)
   
   # Should not see any edge absence 
   expect_false(any(res == 2))
@@ -77,7 +85,13 @@ test_that("make_acyclic removes multiple cycles", {
                       nNodes = nNodes,
                       pmr = 0)
   
-  res <- cycleRmvr(coord, currentES, nNodes, prior, edgeType, pmr, nCPh)
+  res <- cycleRmvr(coord = coord, 
+                   currentES = currentES, 
+                   nNodes = nNodes, 
+                   prior = prior, 
+                   edgeType = edgeType, 
+                   pmr = pmr, 
+                   nCPh = nCPh)
   
   # dag_constraint requires an adj matrix
   adj_res <- build_adj(coord, res, nNodes)
