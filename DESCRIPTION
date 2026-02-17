@@ -28,7 +28,6 @@ Depends: R (>= 3.5.0)
 Imports:
   egg,
   ggplot2,
-  gtools,
   igraph,
   MASS,
   methods,
