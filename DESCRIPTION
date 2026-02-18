@@ -21,7 +21,7 @@ Description: An approximate Bayesian method for inferring Directed Acyclic Graph
     sampling algorithm is then used to infer the posterior probabilities of 
     edge direction and edge absence.
     References:
-    Martin and Fu (2019) <doi:10.48550/arXiv.1909.10678>.
+    Martin, Patchigolla and Fu (2026) <doi:10.48550/arXiv.1909.10678>.
 License: GPL-3 | file LICENSE
 LazyData: true
 Depends: R (>= 3.5.0)
