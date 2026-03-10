@@ -33,7 +33,7 @@
 #'
 #' m1_iv - Topology M1 with n intermediate confounding variables.
 #'
-#' \if{html}{\figure{m1.png}{options: width="75\%" alt="Figure: m1.png"}}
+#' \if{html}{\figure{m1.png}{options: width=450 alt="Figure: m1.png"}}
 #' \if{latex}{\figure{m1.pdf}{options: width=12cm}}
 #'
 #' m2_ge - Topology M2 with three continuous random variables. This graph is a v
@@ -49,7 +49,7 @@
 #'
 #' m2_iv - Topology M2 with n intermediate confounding variables.
 #'
-#' \if{html}{\figure{m2.png}{options: width="75\%" alt="Figure: m2.png"}}
+#' \if{html}{\figure{m2.png}{options: width=450 alt="Figure: m2.png"}}
 #' \if{latex}{\figure{m2.pdf}{options: width=12cm}}
 #'
 #' m3_gv - Topolog M3 with one discrete random variable U and two continuous
@@ -61,7 +61,7 @@
 #'
 #' m3_iv - Topology M3 with n intermediate confounding variables.
 #'
-#' \if{html}{\figure{m3.png}{options: width="75\%" alt="Figure: m3.png"}}
+#' \if{html}{\figure{m3.png}{options: width=450 alt="Figure: m3.png"}}
 #' \if{latex}{\figure{m3.pdf}{options: width=12cm}}
 #'
 #' mp_ge - The multi-parent topology with continuous random variables. This
@@ -72,7 +72,7 @@
 #' graph is made up of multiple v structures and has no other Markov equivalent
 #' graphs.
 #'
-#' \if{html}{\figure{mp.png}{options: width="55\%" alt="Figure: mp.png"}}
+#' \if{html}{\figure{mp.png}{options: width=265 alt="Figure: mp.png"}}
 #' \if{latex}{\figure{mp.pdf}{options: width=7cm}}
 #'
 #' gn4 - Topology GN4 is formed by combining topologies M1 and M2. The Markov
@@ -86,7 +86,7 @@
 #' gn11 - Topology GN11 has two sub-graphs separated by a v structure at node
 #' T6.
 #'
-#' \if{html}{\figure{gn.png}{options: width="55\%" alt="Figure: gn.png"}}
+#' \if{html}{\figure{gn.png}{options: width=265 alt="Figure: gn.png"}}
 #' \if{latex}{\figure{gn.pdf}{options: width=7cm}}
 #'
 #' layer - The layer topology has no other Markov equivalent graphs when using
@@ -96,13 +96,13 @@
 #'
 #' layer_iv - The layer topology with 2 intermediate confounding variables.
 #'
-#' \if{html}{\figure{layer.png}{options: width="75\%" alt="Figure: layer.png"}}
+#' \if{html}{\figure{layer.png}{options: width=450 alt="Figure: layer.png"}}
 #' \if{latex}{\figure{layer.pdf}{options: width=12cm}}
 #'
 #' star - The star topology has no other Markov equivalent graphs when using the
 #' PMR and is made up of multiple M1 topologies.
 #'
-#' \if{html}{\figure{star.png}{options: width="25\%" alt="Figure: star.png"}}
+#' \if{html}{\figure{star.png}{options: width=95 alt="Figure: star.png"}}
 #' \if{latex}{\figure{star.pdf}{options: width=2.5cm}}
 #'
 #' @param N The number of observations to simulate.
