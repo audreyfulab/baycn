@@ -6,7 +6,15 @@
 
 # baycn
 
-baycn is an approximate Bayesian approach for inferring Directed Acyclic Graphs (DAGs) for continuous, discrete, and mixed data. The algorithm can use the graph inferred by another more efficient graph inference method as input; the input graph may contain false edges or undirected edges, but can help reduce the search space to a more manageable size. A Bayesian Metropolis-Hastings-like sampling algorithm is then used to infer the posterior probability of direction and absence for the edges in the network.
+baycn is an approximate Bayesian approach for inferring Directed Acyclic Graphs (DAGs) for continuous, discrete, and mixed data. The algorithm can use the graph inferred by another more efficient graph inference method as input; the input graph may contain false edges or undirected edges, but can help reduce the search space to a more manageable size. A Bayesian Metropolis-Hastings-like sampling algorithm is then used to infer the posterior probability of direction and absence for the edges in the network. 
+
+Official releases are also available on CRAN: https://cran.r-project.org/web/packages/baycn/index.html.
+
+## Reference
+
+Martin, Evan A., Venkata Patchigolla, and Audrey Qiuyan Fu (2026). Approximate Bayesian inference of directed acyclic graphs in biology with flexible priors on edge states. PLOS Computational Biology, 22(3), e1014039.
+https://doi.org/10.1371/journal.pcbi.1014039
+
 
 ## Installation
 
