@@ -280,25 +280,6 @@ mhEdge <- function (data,
                   iterations = iterations,
                   thinTo = thinTo)
 
-  # Display runtime message for finding potential cycles.
-  if (progress) {
-
-    cat('Identifying potential cycles: ')
-
-    begin_time <- Sys.time()
-
-  }
-
-  # Display runtime message for finding potential cycles.
-  if (progress) {
-
-    end_time <- Sys.time()
-
-    cat(as.double(round(end_time - begin_time, 3),
-                  units = 'secs'), 'seconds', '\n')
-
-  }
-
   # Initialize vectors, lists, and matrices ------------------------------------
 
   # A counter used to fill in the MarkovChain matrix.
